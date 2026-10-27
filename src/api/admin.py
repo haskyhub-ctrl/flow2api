@@ -466,11 +466,7 @@ async def _solve_recaptcha_with_api_service(
 ) -> Optional[str]:
     """使用当前配置的第三方打码服务获取 token。"""
     if method == FLOW2API_TEAM_CAPTCHA_METHOD:
-        # Flow2API 团队打码：内置服务，地址与密钥固定。
-        client_key = FLOW2API_TEAM_CAPTCHA_CLIENT_KEY
-        base_url = FLOW2API_TEAM_CAPTCHA_BASE_URL
-        task_type = FLOW2API_TEAM_CAPTCHA_TASK_TYPE
-        min_score = get_yescaptcha_min_score(task_type)
+        raise HTTPException(status_code=400, detail="Embedded third-party CAPTCHA service is disabled.")
     elif method == "yescaptcha":
         client_key = config.yescaptcha_api_key
         base_url = config.yescaptcha_base_url
@@ -1575,7 +1571,7 @@ async def test_proxy_connectivity(
                 timeout=timeout_seconds,
                 impersonate="chrome120",
                 allow_redirects=True,
-                verify=False,
+                verify=True,
             )
 
         elapsed_ms = int((time.time() - start_time) * 1000)
@@ -2040,6 +2036,8 @@ async def update_captcha_config(
 ):
     """Update captcha configuration"""
     captcha_method = normalize_captcha_method(request.get("captcha_method"))
+    if captcha_method == "flow2api_team":
+        raise HTTPException(status_code=400, detail="Embedded third-party CAPTCHA service is disabled.")
     yescaptcha_api_key = request.get("yescaptcha_api_key")
     yescaptcha_base_url = request.get("yescaptcha_base_url")
     yescaptcha_task_type = normalize_yescaptcha_task_type(

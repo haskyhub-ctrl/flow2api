@@ -1,5 +1,7 @@
 # Flow2API
 
+> **Personal fork — local preview only.** Start with [LOCAL_SETUP.md](LOCAL_SETUP.md) and [SECURITY_REVIEW.md](SECURITY_REVIEW.md). A Google-cookie forwarding path in the upstream team CAPTCHA integration was removed. Account import and video generation are disabled by default while the account workflow is reviewed. The original documentation below describes upstream behavior and is not approval to enable it.
+
 <div align="center">
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

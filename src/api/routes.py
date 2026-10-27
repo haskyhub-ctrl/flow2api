@@ -220,7 +220,7 @@ async def retrieve_image_data(url: str) -> Optional[bytes]:
                     "Referer": "https://flow.google.com/",
                 },
                 impersonate="chrome120",
-                verify=False,
+                verify=True,
             )
             if response.status_code == 200 and response.content:
                 return response.content

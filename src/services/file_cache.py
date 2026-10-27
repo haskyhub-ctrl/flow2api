@@ -334,7 +334,7 @@ class FileCache:
                         proxy=proxy_url,
                         headers=headers,
                         impersonate="chrome120",
-                        verify=False,
+                        verify=True,
                     )
 
                     if response.status_code == 200 and response.content:

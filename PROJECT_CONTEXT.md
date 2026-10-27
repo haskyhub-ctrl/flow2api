@@ -19,6 +19,8 @@ Google AI Pro subscription credits are separate from Gemini API billing. This ap
 
 ## Suggested next work
 
+Update on 2026-10-27: targeted source review found a Google-cookie forwarding path in upstream team CAPTCHA mode. Removed/blocked that path, hardened local defaults and logging, updated vulnerable dependencies, and started a local web preview at 127.0.0.1:38000. Read SECURITY_REVIEW.md for evidence, scope, verification and unresolved issues. The interface runs; live account import and video generation are intentionally blocked by default and have not been tested. Setup is in LOCAL_SETUP.md. No Google credentials were entered.
+
 1. Review outgoing network calls, embedded service credentials, CAPTCHA-provider integrations, authentication, and logging before running with real accounts.
 2. Prefer locally retained sessions and explicit user verification; remove unwanted third-party integrations.
 3. Add a durable prompt queue with progress, per-account credit budgets, pause/resume, and bounded retries. Respect service errors and limits.

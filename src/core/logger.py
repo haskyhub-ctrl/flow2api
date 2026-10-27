@@ -1,11 +1,23 @@
 """Debug logger module for detailed API request/response logging"""
 
 import json
+import re
 import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
 from .config import config
+
+
+class SecretFilter(logging.Filter):
+    def filter(self, record):
+        message = record.getMessage()
+        if re.search(r"(?i)(?:cookie|authorization|proxy)\s*:", message):
+            message = "[REDACTED sensitive header]"
+        message = re.sub(r'(?i)("(?:access_?token|session_?token|refresh_?token|id_?token|token|st|at|password|api_?key|clientKey|cookies|session_cookies)"\s*:\s*)"(?:[^"\\]|\\.)*"', r'\1"[REDACTED]"', message)
+        message = re.sub(r"(?i)([?&](?:key|api_key|token|access_token)=)[^&\s]+", r"\1[REDACTED]", message)
+        record.msg, record.args = message, ()
+        return True
 
 
 class DebugLogger:
@@ -27,6 +39,7 @@ class DebugLogger:
         # Create file handler
         file_handler = logging.FileHandler(self.log_file, mode="a", encoding="utf-8")
         file_handler.setLevel(logging.DEBUG)
+        file_handler.addFilter(SecretFilter())
 
         # Create formatter
         formatter = logging.Formatter("%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
@@ -40,9 +53,7 @@ class DebugLogger:
 
     def _mask_token(self, token: str) -> str:
         """Mask token for logging (show first 6 and last 6 characters)"""
-        if not config.debug_mask_token or len(token) <= 12:
-            return token
-        return f"{token[:6]}...{token[-6:]}"
+        return "[REDACTED]" if token else ""
 
     def _format_timestamp(self) -> str:
         """Format current timestamp"""
@@ -65,6 +76,9 @@ class DebugLogger:
         if isinstance(data, dict):
             result = {}
             for key, value in data.items():
+                if re.search(r"(?i)(token|cookie|password|authorization|api.?key|client.?key|secret)", key) or key.lower() in {"st", "at"}:
+                    result[key] = "[REDACTED]"
+                    continue
                 # 对特定的大字段进行截断
                 if (
                     key in ("encodedImage", "base64", "imageData", "data")
@@ -139,10 +153,10 @@ class DebugLogger:
             if body is not None:
                 self.logger.info("\n📦 Request Body:")
                 if isinstance(body, (dict, list)):
-                    body_str = json.dumps(body, indent=2, ensure_ascii=False)
+                    body_str = json.dumps(self._truncate_large_fields(body), indent=2, ensure_ascii=False)
                     self.logger.info(body_str)
                 else:
-                    self.logger.info(str(body))
+                    self.logger.info("<unstructured request body omitted>")
 
             # Files
             if files:
@@ -215,10 +229,7 @@ class DebugLogger:
                     self.logger.info(body_str)
                 except:
                     # Not JSON, log as text (limit length)
-                    if len(body) > 2000:
-                        self.logger.info(f"{body[:2000]}... (truncated)")
-                    else:
-                        self.logger.info(body)
+                    self.logger.info("<unstructured response body omitted>")
             else:
                 self.logger.info(str(body))
 
@@ -254,7 +265,7 @@ class DebugLogger:
                 # Try to parse as JSON
                 try:
                     parsed = json.loads(response_text)
-                    body_str = json.dumps(parsed, indent=2, ensure_ascii=False)
+                    body_str = json.dumps(self._truncate_large_fields(parsed), indent=2, ensure_ascii=False)
                     self.logger.info(body_str)
                 except:
                     # Not JSON, log as text

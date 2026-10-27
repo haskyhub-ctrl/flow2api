@@ -349,35 +349,7 @@ def _cleanup_runtime_artifacts_sync(
 
 # ==================== nodriver 自动安装 ====================
 def _run_pip_install(package: str, use_mirror: bool = False) -> bool:
-    """运行 pip install 命令
-    
-    Args:
-        package: 包名
-        use_mirror: 是否使用国内镜像
-    
-    Returns:
-        是否安装成功
-    """
-    cmd = [sys.executable, "-m", "pip", "install", package]
-    if use_mirror:
-        cmd.extend(["-i", "https://pypi.tuna.tsinghua.edu.cn/simple"])
-    
-    try:
-        debug_logger.log_info(f"[BrowserCaptcha] 正在安装 {package}...")
-        print(f"[BrowserCaptcha] 正在安装 {package}...")
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        if result.returncode == 0:
-            debug_logger.log_info(f"[BrowserCaptcha] ✅ {package} 安装成功")
-            print(f"[BrowserCaptcha] ✅ {package} 安装成功")
-            return True
-        else:
-            debug_logger.log_warning(
-                f"[BrowserCaptcha] {package} 安装失败: {result.stderr[:200]}"
-            )
-            return False
-    except Exception as e:
-        debug_logger.log_warning(f"[BrowserCaptcha] {package} 安装异常: {e}")
-        return False
+    raise RuntimeError("Automatic software installation is disabled; install reviewed dependencies explicitly.")
 
 
 def _ensure_nodriver_installed() -> bool:
@@ -9407,7 +9379,7 @@ class BrowserCaptchaService:
                 proxy=proxy_url,
                 headers={"Accept": "*/*"},
                 impersonate="chrome120",
-                verify=False,
+                verify=True,
             )
 
         if response.status_code != 200 or not response.content:
@@ -9860,7 +9832,7 @@ class BrowserCaptchaService:
                 proxy=proxy_url,
                 headers={"Accept": "*/*"},
                 impersonate="chrome120",
-                verify=False,
+                verify=True,
             )
 
         if response.status_code != 200 or not response.content:

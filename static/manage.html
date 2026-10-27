@@ -5,18 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="管理控制台 - Flow2API">管理控制台 - Flow2API</title>
     <script src="/static/i18n.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/vendor/tailwind.css">
     <style>
         @keyframes slide-up{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
         .animate-slide-up{animation:slide-up .3s ease-out}
         .tab-btn{transition:all .2s ease}
         .line-clamp-2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
     </style>
-    <script>
-        tailwind.config={theme:{extend:{colors:{border:"hsl(0 0% 89%)",input:"hsl(0 0% 89%)",ring:"hsl(0 0% 3.9%)",background:"hsl(0 0% 100%)",foreground:"hsl(0 0% 3.9%)",primary:{DEFAULT:"hsl(0 0% 9%)",foreground:"hsl(0 0% 98%)"},secondary:{DEFAULT:"hsl(0 0% 96.1%)",foreground:"hsl(0 0% 9%)"},muted:{DEFAULT:"hsl(0 0% 96.1%)",foreground:"hsl(0 0% 45.1%)"},destructive:{DEFAULT:"hsl(0 84.2% 60.2%)",foreground:"hsl(0 0% 98%)"}}}}}
-    </script>
+
 </head>
 <body class="h-full bg-background text-foreground antialiased">
+    <aside id="localReviewNotice" hidden style="padding:12px 24px;background:#fff3cc;color:#694900;border-bottom:1px solid #e9cf78;font:14px system-ui">
+      <strong>Ban xem thu tren may</strong> — Chua ket noi Google. Them tai khoan va tao video dang tam khoa de kiem tra bao mat.
+    </aside>
+    <script>fetch('/api/local-status').then(r=>r.json()).then(s=>{document.getElementById('localReviewNotice').hidden=!s.review_mode}).catch(()=>{});</script>
+
     <!-- 导航栏 -->
     <header class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur">
         <div class="mx-auto flex h-14 max-w-7xl items-center px-6">
@@ -368,7 +371,6 @@
                             <label class="text-sm font-medium mb-2 block"><span data-i18n="打码方式">打码方式</span></label>
                             <select id="cfgCaptchaMethod" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" onchange="toggleCaptchaOptions()">
                                 <option value="yescaptcha" data-i18n="YesCaptcha打码">YesCaptcha打码</option>
-                                <option value="flow2api_team" data-i18n="Flow2API团队打码（内置）">Flow2API团队打码（内置）</option>
                                 <option value="captcharun" data-i18n="Captcha.run打码">Captcha.run打码</option>
                                 <option value="twocaptcha" data-i18n="2Captcha打码">2Captcha打码</option>
                                 <option value="capsolver" data-i18n="CapSolver打码">CapSolver打码</option>

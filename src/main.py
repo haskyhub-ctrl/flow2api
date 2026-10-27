@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from .core.config import config
+from .core.local_security import LocalSecurityMiddleware, review_mode
 from .core.database import Database
 from .core.i18n import I18nMiddleware
 from .core.monitoring import CONTENT_TYPE_LATEST, render_main_metrics
@@ -98,6 +99,9 @@ async def lifespan(app: FastAPI):
     print("Flow2API Starting...")
     print("=" * 60)
 
+    if config.admin_password in {"admin", "", "change-me"}:
+        raise RuntimeError("Run start_local.py to generate private administrator credentials.")
+
     # Get config from setting.toml
     config_dict = config.get_raw_config()
 
@@ -127,6 +131,11 @@ async def lifespan(app: FastAPI):
 
     # 尽量在浏览器服务启动前就拿到 token 快照，后续并发管理和预热共用。
     tokens = await token_manager.get_all_tokens()
+    if review_mode() and tokens:
+        raise RuntimeError("Preview requires an empty account database; use a separate clean installation.")
+    if review_mode():
+        captcha_config.captcha_method = "disabled"
+        config.set_captcha_method("disabled")
 
     # Initialize browser captcha service if needed
     browser_service = None
@@ -213,7 +222,8 @@ async def lifespan(app: FastAPI):
                 print(f"Auto-unban task error: {e}")
 
     auto_unban_task_handle = asyncio.create_task(auto_unban_task())
-    token_manager.start_protocol_refresher()
+    if not review_mode():
+        token_manager.start_protocol_refresher()
 
     print("Database initialized")
     print(f"Total tokens: {len(tokens)}")
@@ -282,12 +292,13 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.add_middleware(I18nMiddleware)
+app.add_middleware(LocalSecurityMiddleware)
 
 # Include routers
 app.include_router(routes.router)
@@ -381,3 +392,13 @@ def _ensure_admin_page_session(request: Request):
     if not admin.is_admin_session_token_valid(token):
         return RedirectResponse(url="/login", status_code=302)
     return None
+
+
+@app.get("/api/local-status")
+async def local_status():
+    return {"review_mode": review_mode(), "google_accounts_enabled": not review_mode()}
+
+
+@app.get("/static/vendor/tailwind.css", include_in_schema=False)
+async def local_styles():
+    return FileResponse(str(static_path / "vendor" / "tailwind.css"), media_type="text/css")

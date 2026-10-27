@@ -75,69 +75,11 @@ BROWSER_ENVIRONMENT_PATCH_MARKER = "__flow2apiBrowserEnvironmentPatchInstalled__
 
 # ==================== playwright 自动安装 ====================
 def _run_pip_install(package: str, use_mirror: bool = False) -> bool:
-    """运行 pip install 命令"""
-    cmd = [sys.executable, "-m", "pip", "install", package]
-    if use_mirror:
-        cmd.extend(["-i", "https://pypi.tuna.tsinghua.edu.cn/simple"])
-    
-    try:
-        debug_logger.log_info(f"[BrowserCaptcha] 正在安装 {package}...")
-        progress_runtime_prepare("browser", f"[BrowserCaptcha] 正在安装 {package}...")
-        print(f"[BrowserCaptcha] 正在安装 {package}...")
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        if result.returncode == 0:
-            debug_logger.log_info(f"[BrowserCaptcha] ✅ {package} 安装成功")
-            print(f"[BrowserCaptcha] ✅ {package} 安装成功")
-            return True
-        else:
-            debug_logger.log_warning(
-                f"[BrowserCaptcha] {package} 安装失败: {result.stderr[:200]}"
-            )
-            fail_runtime_prepare(
-                "browser", f"{package} 安装失败，请检查网络或 Python 环境。"
-            )
-            return False
-    except Exception as e:
-        debug_logger.log_warning(f"[BrowserCaptcha] {package} 安装异常: {e}")
-        fail_runtime_prepare("browser", f"{package} 安装异常: {e}")
-        return False
+    raise RuntimeError("Automatic software installation is disabled; install reviewed dependencies explicitly.")
 
 
 def _run_playwright_install(use_mirror: bool = False) -> bool:
-    """安装 playwright chromium 浏览器"""
-    cmd = [sys.executable, "-m", "playwright", "install", "chromium"]
-    env = os.environ.copy()
-    
-    if use_mirror:
-        # 使用国内镜像
-        env["PLAYWRIGHT_DOWNLOAD_HOST"] = "https://npmmirror.com/mirrors/playwright"
-    
-    try:
-        debug_logger.log_info("[BrowserCaptcha] 正在安装 chromium 浏览器...")
-        progress_runtime_prepare("browser", "正在安装 chromium 浏览器，请稍候...")
-        print("[BrowserCaptcha] 正在安装 chromium 浏览器...")
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=600, env=env
-        )
-        if result.returncode == 0:
-            debug_logger.log_info("[BrowserCaptcha] ✅ chromium 浏览器安装成功")
-            progress_runtime_prepare(
-                "browser", "chromium 浏览器安装成功，正在完成收尾检查..."
-            )
-            print("[BrowserCaptcha] ✅ chromium 浏览器安装成功")
-            return True
-        else:
-            debug_logger.log_warning(
-                f"[BrowserCaptcha] chromium 安装失败: {result.stderr[:200]}"
-            )
-            fail_runtime_prepare(
-                "browser", "chromium 浏览器安装失败，请稍后重试或手动安装。"
-            )
-            return False
-    except Exception as e:
-        debug_logger.log_warning(f"[BrowserCaptcha] chromium 安装异常: {e}")
-        fail_runtime_prepare("browser", f"chromium 浏览器安装异常: {e}")
-        return False
+    raise RuntimeError("Automatic software installation is disabled; install reviewed dependencies explicitly.")
 
 
 def _ensure_playwright_installed() -> bool:
@@ -274,7 +216,8 @@ else:
 
             PLAYWRIGHT_AVAILABLE = True
             # 检查并安装浏览器
-            _ensure_browser_installed()
+            # Browser installation must be explicit; never download during import.
+            pass
         except ImportError as e:
             debug_logger.log_error(f"[BrowserCaptcha] playwright 导入失败: {e}")
             print(f"[BrowserCaptcha] ❌ playwright 导入失败: {e}")

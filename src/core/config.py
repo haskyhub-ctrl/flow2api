@@ -15,8 +15,8 @@ YESCAPTCHA_TASK_TYPE_OPTIONS = {
 
 # Flow2API 团队打码：内置服务，地址与密钥写死在代码里，不随配置/数据库改变。
 FLOW2API_TEAM_CAPTCHA_METHOD = "flow2api_team"
-FLOW2API_TEAM_CAPTCHA_BASE_URL = "https://captcha.haqimi.uk"
-FLOW2API_TEAM_CAPTCHA_CLIENT_KEY = "sk-flow-mint-2f9a7c1e4b8d6350"
+FLOW2API_TEAM_CAPTCHA_BASE_URL = ""  # Disabled in this fork.
+FLOW2API_TEAM_CAPTCHA_CLIENT_KEY = ""
 FLOW2API_TEAM_CAPTCHA_TASK_TYPE = "RecaptchaV3TaskProxylessM1S9"
 
 

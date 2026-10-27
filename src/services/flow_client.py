@@ -4638,26 +4638,7 @@ class _FlowClientBase(FlowFrontendMixin):
     async def _build_team_captcha_cookie_map(
         self, token_id: Optional[int]
     ) -> Dict[str, str]:
-        """团队打码下发的 Cookie 键值对（按 flow.google.com 请求口径选取）。"""
-        try:
-            cookie_storage = await self._resolve_flow_frontend_cookie_storage(
-                token_id=token_id
-            )
-            cookie_storage = _safe_updated_flow_cookies(self, cookie_storage)
-        except Exception as e:
-            debug_logger.log_warning(
-                f"[reCAPTCHA {FLOW2API_TEAM_CAPTCHA_METHOD}] 读取账号 Cookie 失败: {e}"
-            )
-            return {}
-        if not str(cookie_storage or "").strip():
-            return {}
-        from .browser_cookie_utils import cookie_pairs_for_url
-
-        cookie_map: Dict[str, str] = {}
-        for name, value in cookie_pairs_for_url(cookie_storage):
-            if name:
-                cookie_map[name] = value
-        return cookie_map
+        raise RuntimeError("Forwarding Google cookies to third-party CAPTCHA services is disabled.")
 
     def _resolve_third_party_captcha_method(self) -> Optional[str]:
         """返回第一个已配置密钥的第三方打码方式（yescaptcha 优先）。
@@ -4666,8 +4647,7 @@ class _FlowClientBase(FlowFrontendMixin):
         browser/personal harvest 出的 token 会被 UNUSUAL_ACTIVITY 拒绝。
         """
         if config.captcha_method == FLOW2API_TEAM_CAPTCHA_METHOD:
-            # 内置团队打码始终可用（地址/密钥写死），优先作为第三方 token 来源。
-            return FLOW2API_TEAM_CAPTCHA_METHOD
+            return None  # Removed: this integration forwarded Google cookies.
         for method, attr in (
             ("yescaptcha", "yescaptcha_api_key"),
             ("capmonster", "capmonster_api_key"),
@@ -5534,9 +5514,7 @@ class _FlowClientBase(FlowFrontendMixin):
         """
         # 获取配置
         if method == "flow2api_team":
-            # 内置团队打码：地址与密钥写死，不接受配置覆盖。
-            client_key = FLOW2API_TEAM_CAPTCHA_CLIENT_KEY
-            base_url = FLOW2API_TEAM_CAPTCHA_BASE_URL
+            raise RuntimeError("The embedded third-party CAPTCHA service is disabled in this fork.")
         elif method == "yescaptcha":
             client_key = config.yescaptcha_api_key
             base_url = config.yescaptcha_base_url
@@ -5690,16 +5668,6 @@ class _FlowClientBase(FlowFrontendMixin):
                     create_data["task"]["userAgent"] = effective_user_agent
                 if min_score is not None:
                     create_data["task"]["minScore"] = min_score
-                if method == FLOW2API_TEAM_CAPTCHA_METHOD:
-                    # 团队打码额外支持把账号 Cookie 与出口代理一起下发，
-                    # 打码侧用同一登录态 + 同一出口 IP 取 token，分数更稳。
-                    team_cookie_map = await self._build_team_captcha_cookie_map(
-                        token_id
-                    )
-                    if team_cookie_map:
-                        create_data["task"]["cookie"] = team_cookie_map
-                    if resolved_proxy_url:
-                        create_data["task"]["proxy"] = resolved_proxy_url
 
                 task_id = None
                 last_create_error = None
